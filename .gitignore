@@ -1,0 +1,11 @@
+.vs/
+
+detours-meta/winmd/
+
+bin.*/
+
+bin/
+obj/
+
+*.csproj.user
+withdll/Properties/

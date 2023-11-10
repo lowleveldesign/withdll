@@ -1,0 +1,93 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: cmd
+
+    strategy:
+      matrix:
+        arch:
+          - x64
+          - x86
+    
+    steps:
+    - uses: actions/checkout@main
+      with:
+        fetch-depth: 1
+        submodules: true
+
+    - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{ matrix.arch }}
+        vsversion: 2022
+
+    - uses: actions/setup-dotnet@main
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Build detours
+      run: nmake
+      working-directory: detours
+
+    - name: Build the detours DLL
+      working-directory: detours-dll
+      run: |
+        mkdir bin.${{ matrix.arch }}
+        pushd bin.${{ matrix.arch }}
+        cl.exe /nologo /LD /TP /DUNICODE /DWIN32 /D_WINDOWS /EHsc /W4 /WX /Zi /O2 /Ob1 /DNDEBUG /Fodetours.obj /Fddetours.pdb ..\detours.cpp ^
+            /link /def:..\detours.def "%GITHUB_WORKSPACE%\detours\lib.${{ matrix.arch }}\detours.lib"
+        popd
+
+    - name: Apply detours.h patch
+      if: ${{ matrix.arch == 'x64' }}
+      shell: pwsh
+      run: "@(Get-Content \".\\detours\\src\\detours.h\")[0..866+920..1234] | Set-Content \".\\detours\\include\\detours.h\""
+
+    - name: Build detours metadata
+      if: ${{ matrix.arch == 'x64' }}
+      working-directory: detours-meta
+      run: dotnet build /p:BuildConfig=""
+
+    - name: Build and publish withdll
+      if: ${{ matrix.arch == 'x64' }}
+      working-directory: withdll
+      run: dotnet publish -r win-x64 -c Release -o "%GITHUB_WORKSPACE%\withdll\bin.x64"
+
+    - uses: actions/upload-artifact@main
+      with:
+        name: detours-${{ matrix.arch }}
+        path: |
+          detours/bin.${{ matrix.arch }}/syelog.exe
+          detours/bin.${{ matrix.arch }}/syelog.pdb
+          detours/bin.${{ matrix.arch }}/trcapi*.dll
+          detours/bin.${{ matrix.arch }}/trcapi*.pdb
+          detours/bin.${{ matrix.arch }}/trcmem*.dll
+          detours/bin.${{ matrix.arch }}/trcmem*.pdb
+          detours/bin.${{ matrix.arch }}/trcreg*.dll
+          detours/bin.${{ matrix.arch }}/trcreg*.pdb
+          detours/bin.${{ matrix.arch }}/trcssl*.dll
+          detours/bin.${{ matrix.arch }}/trcssl*.pdb
+          detours/bin.${{ matrix.arch }}/trctcp*.dll
+          detours/bin.${{ matrix.arch }}/trctcp*.pdb
+
+    - uses: actions/upload-artifact@main
+      with:
+        name: detours-meta
+        path: detours-meta/winmd/detours.winmd
+      if: ${{ matrix.arch == 'x64' }}
+
+    - uses: actions/upload-artifact@main
+      with:
+        name: withdll
+        path: |
+          withdll/bin.x64/withdll.exe
+          withdll/bin.x64/withdll.pdb
+      if: ${{ matrix.arch == 'x64' }}

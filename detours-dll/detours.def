@@ -1,0 +1,20 @@
+LIBRARY detours
+EXPORTS
+
+	DetourTransactionBegin
+	DetourTransactionAbort
+	DetourTransactionCommit
+	DetourTransactionCommitEx
+	DetourUpdateThread
+	DetourAttach
+	DetourDetach
+	DetourCreateProcessWithDllExW
+	DetourCreateProcessWithDllsW
+	DetourFinishHelperProcess
+	DetourGetContainingModule
+	DetourEnumerateModules
+	DetourGetEntryPoint
+	DetourGetModuleSize
+	DetourEnumerateExports
+	DetourEnumerateImports
+	DetourEnumerateImportsEx

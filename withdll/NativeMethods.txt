@@ -1,0 +1,23 @@
+// Windows
+CreateProcess
+OpenProcess
+VirtualAllocEx
+VirtualFreeEx
+WriteProcessMemory
+ReadProcessMemory
+IsWow64Process
+ResumeThread
+WaitForSingleObject
+RtlNtStatusToDosError
+DebugSetProcessKillOnExit
+DebugActiveProcessStop
+
+WIN32_ERROR
+NTSTATUS
+IMAGE_EXPORT_DIRECTORY
+DBG_EXCEPTION_NOT_HANDLED
+DBG_CONTINUE
+MAX_PATH
+
+// Detours
+DetourCreateProcessWithDllsW
