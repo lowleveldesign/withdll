@@ -65,8 +65,8 @@ jobs:
       with:
         name: detours-${{ matrix.arch }}
         path: |
-          detours/bin.${{ matrix.arch }}/syelog.exe
-          detours/bin.${{ matrix.arch }}/syelog.pdb
+          detours/bin.${{ matrix.arch }}/syelogd.exe
+          detours/bin.${{ matrix.arch }}/syelogd.pdb
           detours/bin.${{ matrix.arch }}/trcapi*.dll
           detours/bin.${{ matrix.arch }}/trcapi*.pdb
           detours/bin.${{ matrix.arch }}/trcmem*.dll
