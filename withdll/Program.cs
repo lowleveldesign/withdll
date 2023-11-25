@@ -21,7 +21,13 @@ public static class Program
         }
 
         var dllpaths = (parsedArgs.TryGetValue("d", out var d1) ? d1 : new List<string>(0)).Union(
-                        parsedArgs.TryGetValue("dll", out var d2) ? d2 : new List<string>(0)).ToList();
+                        parsedArgs.TryGetValue("dll", out var d2) ? d2 : new List<string>(0))
+                        .Select(Path.GetFullPath).Distinct().ToList();
+        if (dllpaths.FirstOrDefault(p => !Path.Exists(p)) is {} p)
+        {
+            Console.WriteLine($"Error: DLL file '{p}' does not exist");
+            return 1;
+        }
 
         try
         {
