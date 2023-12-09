@@ -61,17 +61,19 @@ namespace withdll
             using var pereader = new PEReader(File.OpenRead(modulePath));
 
             var exportsDirEntry = pereader.PEHeaders.PEHeader!.ExportTableDirectory;
-            unsafe
+            if (exportsDirEntry.RelativeVirtualAddress != 0)
             {
-                var exportsDir = (IMAGE_EXPORT_DIRECTORY*)pereader.GetSectionData(exportsDirEntry.RelativeVirtualAddress).Pointer;
-
-                if (exportsDir->Base == 1)
+                unsafe
                 {
-                    return ((uint*)pereader.GetSectionData((int)exportsDir->AddressOfFunctions).Pointer)[0] != 0;
-                }
+                    var exportsDir = (IMAGE_EXPORT_DIRECTORY*)pereader.GetSectionData(exportsDirEntry.RelativeVirtualAddress).Pointer;
 
-                return false;
+                    if (exportsDir->Base == 1)
+                    {
+                        return ((uint*)pereader.GetSectionData((int)exportsDir->AddressOfFunctions).Pointer)[0] != 0;
+                    }
+                }
             }
+            return false;
         }
 
         public static void StartProcessWithDlls(List<string> cmdlineArgs, bool debug, List<string> dllPaths)
