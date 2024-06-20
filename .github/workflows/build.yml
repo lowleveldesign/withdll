@@ -61,12 +61,6 @@ jobs:
 
     - uses: actions/upload-artifact@main
       with:
-        name: detours-meta
-        path: detours-meta/winmd/detours.winmd
-      if: ${{ matrix.arch == 'x64' }}
-
-    - uses: actions/upload-artifact@main
-      with:
         name: withdll
         path: |
           withdll/bin.x64/withdll.exe
