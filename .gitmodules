@@ -1,3 +1,4 @@
-[submodule "detours"]
-	path = detours
+[submodule "Detours"]
+	path = Detours
 	url = https://github.com/microsoft/Detours.git
+	shallow = true

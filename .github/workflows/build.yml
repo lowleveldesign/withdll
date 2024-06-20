@@ -37,25 +37,6 @@ jobs:
       run: nmake
       working-directory: detours
 
-    - name: Build the detours DLL
-      working-directory: detours-dll
-      run: |
-        mkdir bin.${{ matrix.arch }}
-        pushd bin.${{ matrix.arch }}
-        cl.exe /nologo /LD /TP /DUNICODE /DWIN32 /D_WINDOWS /EHsc /W4 /WX /Zi /O2 /Ob1 /DNDEBUG /Fodetours.obj /Fddetours.pdb ..\detours.cpp ^
-            /link /def:..\detours.def "%GITHUB_WORKSPACE%\detours\lib.${{ matrix.arch }}\detours.lib"
-        popd
-
-    - name: Apply detours.h patch
-      if: ${{ matrix.arch == 'x64' }}
-      shell: pwsh
-      run: "@(Get-Content \".\\detours\\src\\detours.h\")[0..866+920..1234] | Set-Content \".\\detours\\include\\detours.h\""
-
-    - name: Build detours metadata
-      if: ${{ matrix.arch == 'x64' }}
-      working-directory: detours-meta
-      run: dotnet build /p:BuildConfig=""
-
     - name: Build and publish withdll
       if: ${{ matrix.arch == 'x64' }}
       working-directory: withdll

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -12,16 +12,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectionMetadataWinmd Include="../detours-meta/winmd/*.winmd" />
-
-        <DirectPInvoke Include="detours" />
-        <NativeLibrary Include="../detours/lib.X64/detours.lib" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.46-beta">
-            <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
+      <PackageReference Include="Detours.Win32Metadata" Version="4.0.1.8" />
+      <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.106">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
     </ItemGroup>
 
 </Project>
