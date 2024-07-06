@@ -1,114 +1,110 @@
 ﻿using System.Diagnostics;
 using withdll;
 
-public static class Program
+var parsedArgs = ParseArgs(["h", "help", "debug"], args);
+if (!parsedArgs.TryGetValue("", out var freeArgs))
 {
-    public static int Main(string[] args)
+    freeArgs = [];
+}
+
+if (parsedArgs.ContainsKey("h") || parsedArgs.ContainsKey("help") || freeArgs.Count == 0)
+{
+    ShowHelp();
+    return 1;
+}
+
+var dllPaths = (parsedArgs.TryGetValue("d", out var d1) ? d1 : []).Union(
+                parsedArgs.TryGetValue("dll", out var d2) ? d2 : []).ToList();
+try
+{
+    if (freeArgs.Count == 1 && int.TryParse(freeArgs[0], out var pid))
     {
-        var parsedArgs = ParseArgs(["h", "help", "debug"], args);
-
-        int pid = 0;
-        if (parsedArgs.ContainsKey("") && parsedArgs[""].Count == 1)
-        {
-            int.TryParse(parsedArgs[""][0], out pid);
-        }
-
-        if (parsedArgs.ContainsKey("h") || parsedArgs.ContainsKey("help") ||
-            !parsedArgs.ContainsKey("") || parsedArgs[""].Count == 0)
-        {
-            ShowHelp();
-            return 1;
-        }
-
-        var dllpaths = (parsedArgs.TryGetValue("d", out var d1) ? d1 : new List<string>(0)).Union(
-                        parsedArgs.TryGetValue("dll", out var d2) ? d2 : new List<string>(0))
-                        .Select(Path.GetFullPath).Distinct().ToList();
-        if (dllpaths.FirstOrDefault(p => !Path.Exists(p)) is {} p)
-        {
-            Console.WriteLine($"Error: DLL file '{p}' does not exist");
-            return 1;
-        }
-
-        try
-        {
-            if (pid > 0)
-            {
-                DllInjection.InjectDllsIntoRunningProcess(pid, dllpaths);
-            }
-            else
-            {
-                DllInjection.StartProcessWithDlls(parsedArgs[""], parsedArgs.ContainsKey("debug"), dllpaths);
-            }
-            return 0;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex}");
-            return 1;
-        }
+        DllInjection.InjectDllsIntoRunningProcess(pid, dllPaths);
     }
-
-    private static Dictionary<string, List<string>> ParseArgs(string[] flagNames, string[] rawArgs)
+    else
     {
-        var args = rawArgs.SelectMany(arg => arg.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries)).ToArray();
-        bool IsFlag(string v) => Array.IndexOf(flagNames, v) >= 0;
+        DllInjection.StartProcessWithDlls(freeArgs, parsedArgs.ContainsKey("debug"), dllPaths);
+    }
+    return 0;
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error: {ex}");
+    return 1;
+}
 
-        var result = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-        var lastOption = "";
-        var firstFreeArgPassed = false;
+static Dictionary<string, List<string>> ParseArgs(string[] flagNames, string[] rawArgs)
+{
+    bool IsFlag(string v) => Array.IndexOf(flagNames, v) >= 0;
 
-        foreach (var arg in args)
+    var result = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+    var lastOption = "";
+    var firstFreeArgPassed = false;
+
+    var argsToProcess = new Stack<string>(rawArgs.Reverse());
+
+    while (argsToProcess.Count > 0)
+    {
+        var argToProcess = argsToProcess.Pop();
+
+        if (!firstFreeArgPassed && argToProcess.StartsWith('-'))
         {
-            if (!firstFreeArgPassed && arg.StartsWith("-", StringComparison.Ordinal))
+            if (argToProcess.Split('=', 2) is var splitArgs && splitArgs.Length > 1)
             {
-                var option = arg.TrimStart('-');
-                if (IsFlag(option))
-                {
-                    Debug.Assert(lastOption == "");
-                    result[option] = new();
-                }
-                else
-                {
-                    Debug.Assert(lastOption == "");
-                    lastOption = option;
-                }
+                argsToProcess.Push(splitArgs[1]);
             }
-            else
+
+            if (splitArgs[0] == "--")
             {
-                // the logic is the same for options (lastOption) and free args
-                if (result.TryGetValue(lastOption, out var values))
-                {
-                    values.Add(arg);
-                }
-                else
-                {
-                    result[lastOption] = new List<string> { arg };
-                }
-                firstFreeArgPassed = lastOption == "";
                 lastOption = "";
+                firstFreeArgPassed = true;
+            }
+            else if (splitArgs[0].TrimStart('-') is var option && IsFlag(option))
+            {
+                Debug.Assert(lastOption == "");
+                result[option] = [];
+            }
+            else
+            {
+                Debug.Assert(lastOption == "");
+                lastOption = option;
             }
         }
-        return result;
+        else
+        {
+            // the logic is the same for options (lastOption) and free args
+            if (result.TryGetValue(lastOption, out var values))
+            {
+                values.Add(argToProcess);
+            }
+            else
+            {
+                result[lastOption] = [argToProcess];
+            }
+            firstFreeArgPassed = lastOption == "";
+            lastOption = "";
+        }
     }
+    return result;
+}
 
 
-    private static void ShowHelp()
-    {
-        Console.WriteLine($"withdll - injects DLL(s) into a process");
-        Console.WriteLine("""
+static void ShowHelp()
+{
+    Console.WriteLine($"withdll - injects DLL(s) into a process");
+    Console.WriteLine("""
 Copyright (C) 2023 Sebastian Solnica (https://wtrace.net)
 
 withdll [options] <new process command line | process ID>
 
 Options:
   -h, -help         Show this help screen
-  -d, --dll <path>  A DLL to inject into the target process (can be set multiple times)
+  -d, --dll <path[@<ordinal|name>]>  A DLL to inject into the target process (can be set multiple times)
 
 Examples:
 
    withdll -d c:\temp\mydll1.dll -d c:\temp\mydll2.dll notepad.exe test.txt
-   withdll -d c:\temp\mydll.dll 1234
+   withdll -d c:\temp\mydll.dll@2 1234
+   withdll -d c:\temp\mydll.dll@ExportedFunc 1234
 """);
-    }
 }
-

@@ -1,16 +1,17 @@
 // Windows
 CreateProcess
+DebugActiveProcessStop
+EnumProcessModulesEx
+GetModuleFileNameEx
+IsWow64Process
 OpenProcess
+ReadProcessMemory
+ResumeThread
+RtlNtStatusToDosError
 VirtualAllocEx
 VirtualFreeEx
-WriteProcessMemory
-ReadProcessMemory
-IsWow64Process
-ResumeThread
 WaitForSingleObject
-RtlNtStatusToDosError
-DebugSetProcessKillOnExit
-DebugActiveProcessStop
+WriteProcessMemory
 
 WIN32_ERROR
 NTSTATUS
@@ -21,3 +22,6 @@ MAX_PATH
 
 // Detours
 DetourCreateProcessWithDllsW
+
+// constants
+MAX_PATH
