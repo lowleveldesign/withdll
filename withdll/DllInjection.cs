@@ -12,16 +12,19 @@ using PInvokeWin32 = Windows.Win32.PInvoke;
 
 namespace withdll;
 
+sealed record ProcessStartupConfig(List<string> CmdlineArgs, bool Debug, bool NewConsole, bool WaitForExit);
+
 static class DllInjection
 {
-    public static void StartProcessWithDlls(List<string> cmdlineArgs, bool debug, List<string> dllPaths)
+    public static void StartProcessWithDlls(ProcessStartupConfig config, List<string> dllPaths)
     {
         unsafe
         {
             var startupInfo = new STARTUPINFOW() { cb = (uint)sizeof(STARTUPINFOW) };
 
-            var cmdline = new Span<char>(ConvertStringListToNullTerminatedArray(cmdlineArgs));
-            uint createFlags = debug ? (uint)PROCESS_CREATION_FLAGS.DEBUG_ONLY_THIS_PROCESS : 0;
+            var cmdline = new Span<char>(ConvertStringListToNullTerminatedArray(config.CmdlineArgs));
+            uint createFlags = (config.Debug ? (uint)PROCESS_CREATION_FLAGS.DEBUG_ONLY_THIS_PROCESS : 0) |
+                (config.NewConsole ? (uint)PROCESS_CREATION_FLAGS.CREATE_NEW_CONSOLE : 0);
 
             var pcstrs = dllPaths.Select(p => new PCSTR((byte*)Marshal.StringToHGlobalAnsi(p))).ToArray();
 
@@ -35,12 +38,18 @@ static class DllInjection
                 }
 
                 PInvokeWin32.CloseHandle(processInfo.hThread);
-                PInvokeWin32.CloseHandle(processInfo.hProcess);
 
-                if (debug)
+                if (config.Debug)
                 {
                     PInvokeWin32.DebugActiveProcessStop(processInfo.dwProcessId);
                 }
+
+                if (config.WaitForExit)
+                {
+                    PInvokeWin32.WaitForSingleObject(processInfo.hProcess, PInvokeWin32.INFINITE);
+                }
+
+                PInvokeWin32.CloseHandle(processInfo.hProcess);
             }
             finally
             {

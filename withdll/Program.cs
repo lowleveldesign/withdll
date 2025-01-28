@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using withdll;
 
-var parsedArgs = ParseArgs(["h", "help", "debug"], args);
+var parsedArgs = ParseArgs(["h", "help", "debug", "newconsole", "wait"], args);
 if (!parsedArgs.TryGetValue("", out var freeArgs))
 {
     freeArgs = [];
@@ -23,7 +23,9 @@ try
     }
     else
     {
-        DllInjection.StartProcessWithDlls(freeArgs, parsedArgs.ContainsKey("debug"), dllPaths);
+        DllInjection.StartProcessWithDlls(
+            new(freeArgs, parsedArgs.ContainsKey("debug"), parsedArgs.ContainsKey("newconsole"), parsedArgs.ContainsKey("wait")),
+            dllPaths);
     }
     return 0;
 }
@@ -100,10 +102,13 @@ withdll [options] <new process command line | process ID>
 Options:
   -h, -help         Show this help screen
   -d, --dll <path[@<ordinal|name>]>  A DLL to inject into the target process (can be set multiple times)
+  -debug            Start process with a debugger (useful when using IFEO) [new processes only]
+  -wait             Wait for the started process to finish [new processes only]
+  -newconsole       Launch process with a new command window [new processes only]
 
 Examples:
 
-   withdll -d c:\temp\mydll1.dll -d c:\temp\mydll2.dll notepad.exe test.txt
+   withdll -d c:\temp\mydll1.dll -d c:\temp\mydll2.dll winver.exe
    withdll -d c:\temp\mydll.dll@2 1234
    withdll -d c:\temp\mydll.dll@ExportedFunc 1234
 """);

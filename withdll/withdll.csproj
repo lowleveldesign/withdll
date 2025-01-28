@@ -2,9 +2,9 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net8.0-windows</TargetFramework>
+        <TargetFramework>net9.0-windows</TargetFramework>
         <Copyright>2023 Sebastian Solnica</Copyright>
-        <AssemblyVersion>1.0.1.0</AssemblyVersion>
+        <AssemblyVersion>1.1.0.0</AssemblyVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -13,7 +13,7 @@
 
     <ItemGroup>
       <PackageReference Include="Detours.Win32Metadata" Version="4.0.1.16" />
-      <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.106">
+      <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.162">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
